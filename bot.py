@@ -1,17 +1,35 @@
-from telegram import Update
+from telegram import Update, User
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import database
 import sqlite3
+import random
 
 def start(update: Update, context: CallbackContext***REMOVED*** -> None:
     """Send a message when the command /start is issued."""
     update.message.reply_text('Hi!'***REMOVED***
 
-def get_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
-    update.message.reply_text('Your XP is....'***REMOVED***
+def help(update: Update, context: CallbackContext***REMOVED*** -> None:
+    update.message.reply_markdown_v2(f"""Commands: \n /createrank rankname xp: Creates a new rank for the group is is rank in\. Must be ran by an admin\. \n
+    /progress: Checks your current title and XP progress\n
+    /help: Displays this message"""***REMOVED***
 
 def get_progress(update: Update, context: CallbackContext***REMOVED*** -> None:
-    update.message.reply_text('Your progress is....'***REMOVED***
+    conn = database.create_connection("database.db"***REMOVED***
+    user_id = update.message.from_user.id
+    group_id = update.message.chat.id
+    group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+
+    if group_chat:
+        database.create_user_if_not_exists(conn, user_id, group_id***REMOVED***
+        progress = database.get_user_progress(conn, user_id, group_id***REMOVED***
+        if progress == (-1,-1***REMOVED***:
+            xp = database.get_user_xp(conn, user_id, group_id***REMOVED***
+            title = database.get_user_title(conn, user_id, group_id***REMOVED***
+            update.message.reply_text(f'You are max rank! Your current XP is {xp}. Your title is {title}'***REMOVED***
+        else:
+            xp, max_xp = database.get_user_progress(conn, user_id, group_id***REMOVED***
+            title = database.get_user_title(conn, user_id, group_id***REMOVED***
+            update.message.reply_text(f'You are rank {title}! Your current XP is {xp}/{max_xp}!'***REMOVED***
 
 #Adds a rank to the current server. Only works if the user is an admin. Format is /addrank [title] [min_xp]
 def add_rank(update: Update, context: CallbackContext***REMOVED*** -> None:
@@ -40,6 +58,37 @@ def add_rank(update: Update, context: CallbackContext***REMOVED*** -> None:
         update.message.reply_text(f'This command must be ran in a group!'***REMOVED***
     connection.close(***REMOVED***
 
+def add_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
+    conn = database.create_connection("database.db"***REMOVED***
+    user_id = update.message.from_user.id
+    group_id = update.message.chat.id
+
+    group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+
+    if group_chat:
+        database.create_user_if_not_exists(conn, user_id, group_id***REMOVED***
+        progress = database.get_user_progress(conn, user_id, group_id***REMOVED***
+
+        current_xp = database.get_user_xp(conn, user_id, group_id***REMOVED***
+        random_xp = random.randint(0, 10***REMOVED***
+        new_xp = current_xp+random_xp
+        # update.message.reply_text(f'Current XP: {current_xp}, New XP: {new_xp}'***REMOVED***         
+        database.set_xp(conn, user_id, group_id, new_xp***REMOVED***
+
+        if progress != (-1, -1***REMOVED***:
+            if new_xp>= progress[1]:
+                title = database.get_user_title(conn, user_id, group_id***REMOVED***
+                user_name = update.message.from_user.full_name
+                update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!'***REMOVED*** 
+    else:
+        update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***         
+
+# def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> None:
+#     conn = database.create_connection("database.db"***REMOVED***
+#     group_id = update.message.chat.id
+#     top_users = database.get_top_users(conn, group_id***REMOVED***
+#     for user in top_users:
+
 #This method is called each time a user sends a message. It will handle giving XP to users.
 def read_message(update: Update, context: CallbackContext***REMOVED*** -> None:
     user_id = update.message.from_user.id
@@ -56,9 +105,6 @@ def read_token(filename***REMOVED***:
 
 def main(***REMOVED***:
     """Start the bot."""
-    # Create the Updater and pass it your bot's token.
-    # Make sure to set use_context=True to use the new context based callbacks
-    # Post version 12 this will no longer be necessary
     updater = Updater(read_token("token"***REMOVED***, use_context=True***REMOVED***
 
     # Get the dispatcher to register handlers
@@ -66,12 +112,12 @@ def main(***REMOVED***:
 
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler("start", start***REMOVED******REMOVED***
+    dispatcher.add_handler(CommandHandler("help", help***REMOVED******REMOVED***
     dispatcher.add_handler(CommandHandler("progress", get_progress***REMOVED******REMOVED***
-    dispatcher.add_handler(CommandHandler("getxp", get_xp***REMOVED******REMOVED***
     dispatcher.add_handler(CommandHandler("addrank", add_rank***REMOVED******REMOVED***
 
     # on noncommand i.e message - echo the message on Telegram
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, read_message***REMOVED******REMOVED***
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, add_xp***REMOVED******REMOVED***
 
     # Start the Bot
     updater.start_polling(***REMOVED***
