@@ -102,6 +102,23 @@ def show_leaderboard(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text("This command must be used in a group!")
 
+def list_ranks(update: Update, context: CallbackContext) -> None:
+    group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+    if group_chat:
+        conn = database.create_connection("database.db")
+        group_id = update.message.chat.id
+        output = ""
+        titles = database.get_titles(conn, group_id)
+        count = 1
+        for title, xp in titles:
+            curline = f"{count}. {title} - {xp}xp"
+            count+=1
+            output+=curline
+        update.message.reply_text(output)
+    else:
+        update.message.reply_text("This command must be used in a group!")
+
+
 def read_token(filename):
     f = open(filename, "r")
     return(f.readline())
@@ -119,7 +136,7 @@ def main():
     dispatcher.add_handler(CommandHandler("progress", get_progress))
     dispatcher.add_handler(CommandHandler("leaderboard", show_leaderboard))
     dispatcher.add_handler(CommandHandler("addrank", add_rank, pass_args=True))
-
+    dispatcher.add_handler(CommandHandler("ranks", list_ranks))
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, add_xp))
 
