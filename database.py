@@ -56,6 +56,11 @@ def get_top_users(conn, group_id***REMOVED***:
     c.execute("SELECT UserID, XP FROM Users WHERE GroupID=? ORDER BY XP DESC LIMIT 10", (group_id,***REMOVED******REMOVED***
     return c.fetchall(***REMOVED***
 
+def get_titles(conn, group_id***REMOVED***:
+    c = conn.cursor(***REMOVED***
+    c.execute("SELECT Title, MinXP FROM Titles WHERE GroupID=? ORDER BY MinXP DESC", (group_id,***REMOVED******REMOVED***
+    return c.fetchall(***REMOVED***
+
 connection = create_connection("database.db"***REMOVED***
 # create_user_if_not_exists(connection, 1, 20***REMOVED***
 
