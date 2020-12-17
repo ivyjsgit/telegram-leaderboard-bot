@@ -63,6 +63,9 @@ def add_rank(update: Update, context: CallbackContext) -> None:
 
 def add_xp(update: Update, context: CallbackContext) -> None:
     conn = database.create_connection("database.db")
+    if update.message.from_user==None:
+        print(f"Weird message!!! {update.message}")
+        
     user_id = update.message.from_user.id
     group_id = update.message.chat.id
 
@@ -111,7 +114,7 @@ def list_ranks(update: Update, context: CallbackContext) -> None:
         titles = database.get_titles(conn, group_id)
         count = 1
         for title, xp in titles:
-            curline = f"{count}. {title} - {xp}xp"
+            curline = f"{count}. {title} - {xp}xp\n"
             count+=1
             output+=curline
         update.message.reply_text(output)
