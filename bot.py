@@ -1,4 +1,4 @@
-from telegram import Update, User
+from telegram import Update, User, Bot
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import database
 import sqlite3
@@ -83,11 +83,17 @@ def add_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
     else:
         update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***         
 
-# def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> None:
-#     conn = database.create_connection("database.db"***REMOVED***
-#     group_id = update.message.chat.id
-#     top_users = database.get_top_users(conn, group_id***REMOVED***
-#     for user in top_users:
+def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> None:
+    conn = database.create_connection("database.db"***REMOVED***
+    group_id = update.message.chat.id
+    top_users = database.get_top_users(conn, group_id***REMOVED***
+    output = ""
+    for user,xp in top_users:
+        name = context.bot.get_chat_member(group_id, user***REMOVED***.user.full_name
+        curline = f"{name} {xp}xp\n"
+        output+=curline
+    update.message.reply_text(output***REMOVED***
+    
 
 #This method is called each time a user sends a message. It will handle giving XP to users.
 def read_message(update: Update, context: CallbackContext***REMOVED*** -> None:
@@ -114,6 +120,7 @@ def main(***REMOVED***:
     dispatcher.add_handler(CommandHandler("start", start***REMOVED******REMOVED***
     dispatcher.add_handler(CommandHandler("help", help***REMOVED******REMOVED***
     dispatcher.add_handler(CommandHandler("progress", get_progress***REMOVED******REMOVED***
+    dispatcher.add_handler(CommandHandler("leaderboard", show_leaderboard***REMOVED******REMOVED***
     dispatcher.add_handler(CommandHandler("addrank", add_rank, pass_args=True***REMOVED******REMOVED***
 
     # on noncommand i.e message - echo the message on Telegram
