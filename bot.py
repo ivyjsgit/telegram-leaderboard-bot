@@ -6,12 +6,13 @@ import random
 
 def start(update: Update, context: CallbackContext***REMOVED*** -> None:
     """Send a message when the command /start is issued."""
-    update.message.reply_text('Hi!'***REMOVED***
+    update.message.reply_text('Add me to a group to use me!'***REMOVED***
 
 def help(update: Update, context: CallbackContext***REMOVED*** -> None:
     update.message.reply_markdown_v2(f"""Commands: \n /createrank rankname xp: Creates a new rank for the group is is rank in\. Must be ran by an admin\. \n
     /progress: Checks your current title and XP progress\n
-    /help: Displays this message"""***REMOVED***
+    /help: Displays this message\n
+    /leaderboard: Displays the users with the top 10 xp in the current group\."""***REMOVED***
 
 def get_progress(update: Update, context: CallbackContext***REMOVED*** -> None:
     conn = database.create_connection("database.db"***REMOVED***
@@ -30,7 +31,9 @@ def get_progress(update: Update, context: CallbackContext***REMOVED*** -> None:
             xp, max_xp = database.get_user_progress(conn, user_id, group_id***REMOVED***
             title = database.get_user_title(conn, user_id, group_id***REMOVED***
             update.message.reply_text(f'You are rank {title}! Your current XP is {xp}/{max_xp}!'***REMOVED***
-
+    else:
+        update.message.reply_text(f'This command must be run in a group!'***REMOVED***
+        
 #Adds a rank to the current server. Only works if the user is an admin. Format is /addrank [title] [min_xp]
 def add_rank(update: Update, context: CallbackContext***REMOVED*** -> None:
     connection = database.create_connection("database.db"***REMOVED***
@@ -84,27 +87,20 @@ def add_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
         update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***         
 
 def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> None:
-    conn = database.create_connection("database.db"***REMOVED***
-    group_id = update.message.chat.id
-    top_users = database.get_top_users(conn, group_id***REMOVED***
-    output = ""
-    for user,xp in top_users:
-        name = context.bot.get_chat_member(group_id, user***REMOVED***.user.full_name
-        title = database.get_user_title(conn, user, group_id***REMOVED***
-        curline = f"{name} ({title}***REMOVED*** {xp}xp\n"
-        output+=curline
-    update.message.reply_text(output***REMOVED***
-    
-
-#This method is called each time a user sends a message. It will handle giving XP to users.
-def read_message(update: Update, context: CallbackContext***REMOVED*** -> None:
-    user_id = update.message.from_user.id
-    chat_id = update.message.chat
     group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
     if group_chat:
-        update.message.reply_text(f'Read a message from groupchat! user_id: {user_id} group_id: {chat_id.id}'***REMOVED***
+        conn = database.create_connection("database.db"***REMOVED***
+        group_id = update.message.chat.id
+        top_users = database.get_top_users(conn, group_id***REMOVED***
+        output = ""
+        for user,xp in top_users:
+            name = context.bot.get_chat_member(group_id, user***REMOVED***.user.full_name
+            title = database.get_user_title(conn, user, group_id***REMOVED***
+            curline = f"{name} ({title}***REMOVED*** {xp}xp\n"
+            output+=curline
+        update.message.reply_text(output***REMOVED***
     else:
-        update.message.reply_text(f'Read a message from DM! user_id: {user_id }'***REMOVED***
+        update.message.reply_text("This command must be used in a group!"***REMOVED***
 
 def read_token(filename***REMOVED***:
     f = open(filename, "r"***REMOVED***
