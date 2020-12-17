@@ -34,7 +34,7 @@ def get_progress(update: Update, context: CallbackContext) -> None:
 #Adds a rank to the current server. Only works if the user is an admin. Format is /addrank [title] [min_xp]
 def add_rank(update: Update, context: CallbackContext) -> None:
     connection = database.create_connection("database.db")
-    text = update.message.text.split()[1:]
+    text = context.args
     user_id = update.message.from_user.id
     chat_id = update.message.chat.id
     admins = update.message.chat.get_administrators()
@@ -114,7 +114,7 @@ def main():
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("progress", get_progress))
-    dispatcher.add_handler(CommandHandler("addrank", add_rank))
+    dispatcher.add_handler(CommandHandler("addrank", add_rank, pass_args=True))
 
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, add_xp))
