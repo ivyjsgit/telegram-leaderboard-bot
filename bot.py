@@ -90,7 +90,8 @@ def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> No
     output = ""
     for user,xp in top_users:
         name = context.bot.get_chat_member(group_id, user***REMOVED***.user.full_name
-        curline = f"{name} {xp}xp\n"
+        title = database.get_user_title(conn, user, group_id***REMOVED***
+        curline = f"{name} ({title}***REMOVED*** {xp}xp\n"
         output+=curline
     update.message.reply_text(output***REMOVED***
     
