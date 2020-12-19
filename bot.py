@@ -63,31 +63,29 @@ def add_rank(update: Update, context: CallbackContext***REMOVED*** -> None:
 
 def add_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
     conn = database.create_connection("database.db"***REMOVED***
-    if update.message.from_user==None:
-        print(f"Weird message!!! {update.message}"***REMOVED***
-        
-    user_id = update.message.from_user.id
-    group_id = update.message.chat.id
+    if update.message != None and update.message.from_user != None:    
+        user_id = update.message.from_user.id
+        group_id = update.message.chat.id
 
-    group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+        group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
 
-    if group_chat:
-        database.create_user_if_not_exists(conn, user_id, group_id***REMOVED***
-        progress = database.get_user_progress(conn, user_id, group_id***REMOVED***
+        if group_chat:
+            database.create_user_if_not_exists(conn, user_id, group_id***REMOVED***
+            progress = database.get_user_progress(conn, user_id, group_id***REMOVED***
 
-        current_xp = database.get_user_xp(conn, user_id, group_id***REMOVED***
-        random_xp = random.randint(0, 10***REMOVED***
-        new_xp = current_xp+random_xp
-        # update.message.reply_text(f'Current XP: {current_xp}, New XP: {new_xp}'***REMOVED***         
-        database.set_xp(conn, user_id, group_id, new_xp***REMOVED***
+            current_xp = database.get_user_xp(conn, user_id, group_id***REMOVED***
+            random_xp = random.randint(0, 10***REMOVED***
+            new_xp = current_xp+random_xp
+            # update.message.reply_text(f'Current XP: {current_xp}, New XP: {new_xp}'***REMOVED***         
+            database.set_xp(conn, user_id, group_id, new_xp***REMOVED***
 
-        if progress != (-1, -1***REMOVED***:
-            if new_xp>= progress[1]:
-                title = database.get_user_title(conn, user_id, group_id***REMOVED***
-                user_name = update.message.from_user.full_name
-                update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!'***REMOVED*** 
-    else:
-        update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***         
+            if progress != (-1, -1***REMOVED***:
+                if new_xp>= progress[1]:
+                    title = database.get_user_title(conn, user_id, group_id***REMOVED***
+                    user_name = update.message.from_user.full_name
+                    update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!'***REMOVED*** 
+        else:
+            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***         
 
 def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> None:
     group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
