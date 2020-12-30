@@ -1,0 +1,15 @@
+[Unit]
+Description=Telegram Leaderboard Bot
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=forking
+Restart=always
+RestartSec=30
+User=ivy
+WorkingDirectory=/home/ivy/Desktop/telegram-leaderboard-bot/telegram-leaderboard-bot/
+ExecStart=/usr/bin/screen -dms leaderboard /usr/bin/python3 bot.py
+ExecStop=/usr/bin/screen -S leaderboard -X -p 0 -X stuff "^C"
+
+[Install]
+WantedBy=multi-user.target

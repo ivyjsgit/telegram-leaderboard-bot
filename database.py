@@ -1,11 +1,13 @@
 import sqlite3
 import random
+import sys
 
 def create_connection(db_file***REMOVED***:
     conn = None
     try:
         conn = sqlite3.connect(db_file***REMOVED***
-    except Error as e:
+    except:
+        e = sys.exc_info(***REMOVED***[0]
         print(e***REMOVED***
     return conn
 

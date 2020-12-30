@@ -74,9 +74,9 @@ def add_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
             progress = database.get_user_progress(conn, user_id, group_id***REMOVED***
 
             current_xp = database.get_user_xp(conn, user_id, group_id***REMOVED***
-            random_xp = random.randint(0, 10***REMOVED***
+            random_xp = award_xp(update.message.text***REMOVED***
+            # update.message.reply_text(f"Your message: {update.message.text} XP given: {random_xp} length: {len(update.message.text***REMOVED***}"***REMOVED***
             new_xp = current_xp+random_xp
-            # update.message.reply_text(f'Current XP: {current_xp}, New XP: {new_xp}'***REMOVED***         
             database.set_xp(conn, user_id, group_id, new_xp***REMOVED***
 
             if progress != (-1, -1***REMOVED***:
@@ -85,7 +85,13 @@ def add_xp(update: Update, context: CallbackContext***REMOVED*** -> None:
                     user_name = update.message.from_user.full_name
                     update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!'***REMOVED*** 
         else:
-            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***         
+            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat'***REMOVED***        
+
+def award_xp(message:str ***REMOVED*** -> int:
+    if len(message***REMOVED***<=3:
+        return random.randint(0, 2***REMOVED***
+    else:
+        return random.randint(0, 15***REMOVED***
 
 def show_leaderboard(update: Update, context: CallbackContext***REMOVED*** -> None:
     group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
