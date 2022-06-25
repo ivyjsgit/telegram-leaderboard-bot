@@ -77,8 +77,7 @@ def add_xp(update: Update, context: CallbackContext) -> None:
         group_id = update.message.chat.id
 
         group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
-
-        if group_chat and get_opt_status(conn, user_id) == False:
+        if group_chat and database.get_opt_out_status(conn, user_id) == False:
             database.create_user_if_not_exists(conn, user_id, group_id)
             progress = database.get_user_progress(conn, user_id, group_id)
 
@@ -172,8 +171,8 @@ def list_ranks(update: Update, context: CallbackContext) -> None:
         update.message.reply_text("This command must be used in a group!")
 
 def get_opt_status(update: Update, context: CallbackContext) -> None:
-        user_id = update.message.from_user.id
         conn = database.create_connection("database.db")
+        user_id = update.message.from_user.id
         status = database.get_opt_out_status(conn, user_id)
         update.message.reply_text(f"Opted out: {status}")
 
