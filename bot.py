@@ -78,7 +78,7 @@ def add_xp(update: Update, context: CallbackContext) -> None:
 
         group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
 
-        if group_chat:
+        if group_chat and get_opt_status(conn, user_id) == False:
             database.create_user_if_not_exists(conn, user_id, group_id)
             progress = database.get_user_progress(conn, user_id, group_id)
 
@@ -101,6 +101,43 @@ def award_xp(message:str ) -> int:
         return random.randint(0, 2)
     else:
         return random.randint(0, 15)
+
+def opt_out_command(update: Update, context: CallbackContext) -> None:
+    conn = database.create_connection("database.db")
+    if update.message != None and update.message.from_user != None:    
+        user_id = update.message.from_user.id
+        group_id = update.message.chat.id
+
+        group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+
+        if group_chat:
+            database.create_user_if_not_exists(conn, user_id, group_id)
+            database.opt_out(conn, user_id)
+            update.message.reply_text(f'You have been opted out!') 
+        else:
+            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat')  
+
+def opt_in_command(update: Update, context: CallbackContext) -> None:
+    conn = database.create_connection("database.db")
+    if update.message != None and update.message.from_user != None:    
+        user_id = update.message.from_user.id
+        group_id = update.message.chat.id
+
+        group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+
+        if group_chat:
+            database.create_user_if_not_exists(conn, user_id, group_id)
+            database.opt_in(conn, user_id)
+            update.message.reply_text(f'You have been opted in!') 
+        else:
+            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat')  
+
+
+
+
+
+
+
 
 def show_leaderboard(update: Update, context: CallbackContext) -> None:
     group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
@@ -134,10 +171,15 @@ def list_ranks(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text("This command must be used in a group!")
 
+def get_opt_status(update: Update, context: CallbackContext) -> None:
+        user_id = update.message.from_user.id
+        conn = database.create_connection("database.db")
+        status = database.get_opt_out_status(conn, user_id)
+        update.message.reply_text(f"Status: {status}")
 
 def read_token(filename):
     f = open(filename, "r")
-    return(f.readline())
+    return(f.readline())   
 
 def main():
     """Start the bot."""
@@ -153,6 +195,10 @@ def main():
     dispatcher.add_handler(CommandHandler("leaderboard", show_leaderboard))
     dispatcher.add_handler(CommandHandler("addrank", add_rank, pass_args=True))
     dispatcher.add_handler(CommandHandler("ranks", list_ranks))
+    dispatcher.add_handler(CommandHandler("optout", opt_out_command))
+    dispatcher.add_handler(CommandHandler("optin", opt_in_command))
+    dispatcher.add_handler(CommandHandler("getoptinstatus", get_opt_status))
+
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, add_xp))
 
