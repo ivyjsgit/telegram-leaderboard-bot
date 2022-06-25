@@ -38,7 +38,7 @@ def get_user_title(conn, user_id, group_id):
 
 def create_rank(conn, title, group_id, min_xp):
     c = conn.cursor()
-    c.execute('INSERT INTO Titles (Title, GroupID, MinXP, OptedOut) VALUES (?, ?, ?)', (title, group_id, min_xp, False))
+    c.execute('INSERT INTO Titles (Title, GroupID, MinXP) VALUES (?, ?, ?)', (title, group_id, min_xp))
     conn.commit()
 
 def set_xp(conn, user_id, group_id, xp):
@@ -65,7 +65,6 @@ def opt_in(conn, user_id):
 
 def get_opt_out_status(conn, user_id) -> bool:
     c = conn.cursor()
-    print(user_id)
     c.execute('SELECT OptedOut FROM Users WHERE UserID=?', (user_id,))
     results =  c.fetchone()
     return bool(results[0])

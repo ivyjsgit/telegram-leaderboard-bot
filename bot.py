@@ -175,7 +175,7 @@ def get_opt_status(update: Update, context: CallbackContext) -> None:
         user_id = update.message.from_user.id
         conn = database.create_connection("database.db")
         status = database.get_opt_out_status(conn, user_id)
-        update.message.reply_text(f"Status: {status}")
+        update.message.reply_text(f"Opted out: {status}")
 
 def read_token(filename):
     f = open(filename, "r")
