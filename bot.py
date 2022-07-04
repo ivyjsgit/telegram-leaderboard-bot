@@ -3,6 +3,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 import database
 import sqlite3
 import random
+import datetime
 
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -23,6 +24,7 @@ def get_progress(update: Update, context: CallbackContext) -> None:
 
     if group_chat:
         database.create_user_if_not_exists(conn, user_id, group_id)
+
         progress = database.get_user_progress(conn, user_id, group_id)
         if progress == (-1,-1):
             xp = database.get_user_xp(conn, user_id, group_id)
@@ -75,8 +77,17 @@ def add_xp(update: Update, context: CallbackContext) -> None:
     if update.message != None and update.message.from_user != None:    
         user_id = update.message.from_user.id
         group_id = update.message.chat.id
-
         group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
+        
+        #Make sure we have a date
+        if(database.get_last_update(conn, user_id) == None):
+            username = update.message.from_user.full_name
+            database.update_username(conn, username, user_id)
+            database.update_date(conn, user_id)
+
+
+
+
         if group_chat and database.get_opt_out_status(conn, user_id) == False:
             database.create_user_if_not_exists(conn, user_id, group_id)
             progress = database.get_user_progress(conn, user_id, group_id)
@@ -86,6 +97,13 @@ def add_xp(update: Update, context: CallbackContext) -> None:
             # update.message.reply_text(f"Your message: {update.message.text} XP given: {random_xp} length: {len(update.message.text)}")
             new_xp = current_xp+random_xp
             database.set_xp(conn, user_id, group_id, new_xp)
+
+            if database.get_last_update(conn, user_id) != datetime.date.today():
+                username = update.message.from_user.full_name
+                database.update_username(conn, username, user_id)
+                database.update_date(conn, user_id)
+
+
 
             if progress != (-1, -1):
                 if new_xp>= progress[1]:
