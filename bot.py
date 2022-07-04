@@ -30,7 +30,8 @@ def get_progress(update: Update, context: CallbackContext) -> None:
             xp = database.get_user_xp(conn, user_id, group_id)
             title = database.get_user_title(conn, user_id, group_id)
             if is_reply:
-                username = update.message.reply_to_message.from_user.full_name
+                # username = update.message.reply_to_message.from_user.full_name
+                username = database.get_username(conn, user_id)
                 update.message.reply_text(f'{username} is max rank! Their current XP is {xp}. Their title is {title}')
             else:
                 update.message.reply_text(f'You are max rank! Your current XP is {xp}. Your title is {title}')
@@ -83,7 +84,6 @@ def add_xp(update: Update, context: CallbackContext) -> None:
         if(database.get_last_update(conn, user_id) == None):
             username = update.message.from_user.full_name
             database.update_username(conn, username, user_id)
-            database.update_date(conn, user_id)
 
 
 
@@ -101,9 +101,6 @@ def add_xp(update: Update, context: CallbackContext) -> None:
             if database.get_last_update(conn, user_id) != datetime.date.today():
                 username = update.message.from_user.full_name
                 database.update_username(conn, username, user_id)
-                database.update_date(conn, user_id)
-
-
 
             if progress != (-1, -1):
                 if new_xp>= progress[1]:

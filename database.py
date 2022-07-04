@@ -86,6 +86,7 @@ def update_username(conn, username, user_id):
     c = conn.cursor()
     c.execute('UPDATE Users Set Username = ? WHERE UserID=?', (username, user_id))
     conn.commit()
+    update_date(conn, user_id)
 
 def get_username(conn, user_id):
     c = conn.cursor()
