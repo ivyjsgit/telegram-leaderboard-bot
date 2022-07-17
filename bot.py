@@ -3,7 +3,6 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 import database
 import sqlite3
 import random
-import datetime
 
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -24,14 +23,12 @@ def get_progress(update: Update, context: CallbackContext) -> None:
 
     if group_chat:
         database.create_user_if_not_exists(conn, user_id, group_id)
-
         progress = database.get_user_progress(conn, user_id, group_id)
         if progress == (-1,-1):
             xp = database.get_user_xp(conn, user_id, group_id)
             title = database.get_user_title(conn, user_id, group_id)
             if is_reply:
-                # username = update.message.reply_to_message.from_user.full_name
-                username = database.get_username(conn, user_id)
+                username = update.message.reply_to_message.from_user.full_name
                 update.message.reply_text(f'{username} is max rank! Their current XP is {xp}. Their title is {title}')
             else:
                 update.message.reply_text(f'You are max rank! Your current XP is {xp}. Your title is {title}')
@@ -78,16 +75,8 @@ def add_xp(update: Update, context: CallbackContext) -> None:
     if update.message != None and update.message.from_user != None:    
         user_id = update.message.from_user.id
         group_id = update.message.chat.id
+
         group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
-        
-        #Make sure we have a date
-        if(database.get_last_update(conn, user_id) == None):
-            username = update.message.from_user.full_name
-            database.update_username(conn, username, user_id)
-
-
-
-
         if group_chat and database.get_opt_out_status(conn, user_id) == False:
             database.create_user_if_not_exists(conn, user_id, group_id)
             progress = database.get_user_progress(conn, user_id, group_id)
@@ -98,17 +87,11 @@ def add_xp(update: Update, context: CallbackContext) -> None:
             new_xp = current_xp+random_xp
             database.set_xp(conn, user_id, group_id, new_xp)
 
-            if database.get_last_update(conn, user_id) != datetime.date.today():
-                username = update.message.from_user.full_name
-                database.update_username(conn, username, user_id)
-
             if progress != (-1, -1):
                 if new_xp>= progress[1]:
                     title = database.get_user_title(conn, user_id, group_id)
                     user_name = update.message.from_user.full_name
-                    update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!') 
-        else:
-            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat')        
+                    update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!')      
 
 def award_xp(message:str ) -> int:
     if len(message)<=3:
@@ -128,8 +111,6 @@ def opt_out_command(update: Update, context: CallbackContext) -> None:
             database.create_user_if_not_exists(conn, user_id, group_id)
             database.opt_out(conn, user_id)
             update.message.reply_text(f'You have been opted out!') 
-        else:
-            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat')  
 
 def opt_in_command(update: Update, context: CallbackContext) -> None:
     conn = database.create_connection("database.db")
@@ -143,12 +124,6 @@ def opt_in_command(update: Update, context: CallbackContext) -> None:
             database.create_user_if_not_exists(conn, user_id, group_id)
             database.opt_in(conn, user_id)
             update.message.reply_text(f'You have been opted in!') 
-        else:
-            update.message.reply_text(f'Error: can\'t do ranking because not a groupchat')  
-
-
-
-
 
 
 
@@ -161,7 +136,10 @@ def show_leaderboard(update: Update, context: CallbackContext) -> None:
         top_users = database.get_top_users(conn, group_id)
         output = ""
         for user,xp in top_users:
-            name = context.bot.get_chat_member(group_id, user).user.full_name
+            try:
+                name = context.bot.get_chat_member(group_id, user).user.full_name
+            except:
+                name = "Deleted user"
             title = database.get_user_title(conn, user, group_id)
             curline = f"{name} ({title}) {xp}xp\n"
             output+=curline
