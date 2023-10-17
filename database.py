@@ -1,8 +1,6 @@
 import sqlite3
 import random
 import sys
-from datetime import date
-import datetime
 
 def create_connection(db_file):
     conn = None
@@ -52,6 +50,7 @@ def create_user_if_not_exists(conn, user_id, group_id):
     c = conn.cursor()
     c.execute("SELECT * FROM Users WHERE UserID=? AND GROUPID=?",(user_id, group_id))
     if c.fetchone() == None:
+        print(f"User does not exist! {user_id}, {group_id}")
         c.execute("INSERT INTO Users (UserID, GroupID, XP) VALUES (?, ?, ?)", (user_id, group_id, 0))
         conn.commit()
 
@@ -81,36 +80,6 @@ def get_titles(conn, group_id):
     c = conn.cursor()
     c.execute("SELECT Title, MinXP FROM Titles WHERE GroupID=? ORDER BY MinXP DESC", (group_id,))
     return c.fetchall()
-
-def update_username(conn, username, user_id):
-    c = conn.cursor()
-    c.execute('UPDATE Users Set Username = ? WHERE UserID=?', (username, user_id))
-    conn.commit()
-    update_date(conn, user_id)
-
-def get_username(conn, user_id):
-    c = conn.cursor()
-    c.execute("SELECT Username FROM Users WHERE UserID=? ", (user_id,))
-    return c.fetchall()
-
-def get_last_update(conn, user_id):
-    c = conn.cursor()
-    c.execute("SELECT LastUpdated FROM Users WHERE UserID=? ", (user_id,))
-    date = c.fetchone()[0]
-    if(date != None):
-            if c != None:
-                return datetime.datetime.strptime(date, '%Y-%m-%d').date()
-            else:
-                return None
-    return None
-
-
-def update_date(conn, user_id):
-    c = conn.cursor()
-    c.execute('UPDATE Users Set LastUpdated = ? WHERE UserID=?', (datetime.date.today(), user_id))
-    conn.commit()
-
-
 
 connection = create_connection("database.db")
 # create_user_if_not_exists(connection, 1, 20)

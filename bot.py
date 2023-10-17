@@ -3,6 +3,9 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 import database
 import sqlite3
 import random
+import psutil
+import apt
+import distro
 
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -23,23 +26,36 @@ def get_progress(update: Update, context: CallbackContext) -> None:
 
     if group_chat:
         database.create_user_if_not_exists(conn, user_id, group_id)
+        is_opted_out = database.get_opt_out_status(conn, user_id)
         progress = database.get_user_progress(conn, user_id, group_id)
         if progress == (-1,-1):
             xp = database.get_user_xp(conn, user_id, group_id)
             title = database.get_user_title(conn, user_id, group_id)
             if is_reply:
                 username = update.message.reply_to_message.from_user.full_name
-                update.message.reply_text(f'{username} is max rank! Their current XP is {xp}. Their title is {title}')
+                if is_opted_out:
+                    update.message.reply_text(f'{username} is max rank! Their current XP is {xp}. Their title is {title}. They are opted out')
+                else:
+                    update.message.reply_text(f'{username} is max rank! Their current XP is {xp}. Their title is {title}')
             else:
-                update.message.reply_text(f'You are max rank! Your current XP is {xp}. Your title is {title}')
+                if is_opted_out:
+                    update.message.reply_text(f'You are max rank! Your current XP is {xp}. Your title is {title}. You are opted out')
+                else:
+                    update.message.reply_text(f'You are max rank! Your current XP is {xp}. Your title is {title}')
         else:
             xp, max_xp = database.get_user_progress(conn, user_id, group_id)
             title = database.get_user_title(conn, user_id, group_id)
             if is_reply:
                 username = update.message.reply_to_message.from_user.full_name
-                update.message.reply_text(f'{username} is rank {title}! Their current XP is {xp}/{max_xp}!')
+                if is_opted_out:
+                    update.message.reply_text(f'{username} is rank {title}! Their current XP is {xp}/{max_xp}! They are opted out.')
+                else:
+                    update.message.reply_text(f'{username} is rank {title}! Their current XP is {xp}/{max_xp}!')
             else:
-                update.message.reply_text(f'You are rank {title}! Your current XP is {xp}/{max_xp}!')
+                if is_opted_out:
+                    update.message.reply_text(f'You are rank {title}! Your current XP is {xp}/{max_xp}! You are opted out.')
+                else:
+                    update.message.reply_text(f'You are rank {title}! Your current XP is {xp}/{max_xp}!')
     else:
         update.message.reply_text(f'This command must be run in a group!')
         
@@ -77,21 +93,22 @@ def add_xp(update: Update, context: CallbackContext) -> None:
         group_id = update.message.chat.id
 
         group_chat = update.message.chat.type=="group" or update.message.chat.type=="supergroup"
-        if group_chat and database.get_opt_out_status(conn, user_id) == False:
+        if group_chat:
             database.create_user_if_not_exists(conn, user_id, group_id)
-            progress = database.get_user_progress(conn, user_id, group_id)
+            if database.get_opt_out_status(conn, user_id) == False:
+                progress = database.get_user_progress(conn, user_id, group_id)
 
-            current_xp = database.get_user_xp(conn, user_id, group_id)
-            random_xp = award_xp(update.message.text)
-            # update.message.reply_text(f"Your message: {update.message.text} XP given: {random_xp} length: {len(update.message.text)}")
-            new_xp = current_xp+random_xp
-            database.set_xp(conn, user_id, group_id, new_xp)
+                current_xp = database.get_user_xp(conn, user_id, group_id)
+                random_xp = award_xp(update.message.text)
+                # update.message.reply_text(f"Your message: {update.message.text} XP given: {random_xp} length: {len(update.message.text)}")
+                new_xp = current_xp+random_xp
+                database.set_xp(conn, user_id, group_id, new_xp)
 
-            if progress != (-1, -1):
-                if new_xp>= progress[1]:
-                    title = database.get_user_title(conn, user_id, group_id)
-                    user_name = update.message.from_user.full_name
-                    update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!')      
+                if progress != (-1, -1):
+                    if new_xp>= progress[1]:
+                        title = database.get_user_title(conn, user_id, group_id)
+                        user_name = update.message.from_user.full_name
+                        update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!')      
 
 def award_xp(message:str ) -> int:
     if len(message)<=3:
@@ -139,6 +156,7 @@ def show_leaderboard(update: Update, context: CallbackContext) -> None:
             try:
                 name = context.bot.get_chat_member(group_id, user).user.full_name
             except:
+                print(user)
                 name = "Deleted user"
             title = database.get_user_title(conn, user, group_id)
             curline = f"{name} ({title}) {xp}xp\n"
@@ -173,6 +191,43 @@ def read_token(filename):
     f = open(filename, "r")
     return(f.readline())   
 
+def get_os_version():
+    return f"{distro.id().title()} {distro.version(best=True)}"
+
+def get_memory_usage():
+    memory = psutil.virtual_memory()
+    total_memory = memory.total / (1024 ** 3)  # Convert to GB
+    used_memory = memory.used / (1024 ** 3)  # Convert to GB
+    return total_memory, used_memory
+
+def get_cpu_usage():
+    return psutil.cpu_percent(interval=1)
+
+def get_updates_available():
+    cache = apt.Cache()
+    cache.open()
+    cache.upgrade()
+    updates = [pkg for pkg in cache if pkg.is_upgradable]
+    return len(updates)
+
+def get_system_info(update: Update, context: CallbackContext):
+    user_id =  update.message.from_user.id
+
+    if user_id == 191006256:
+        os_version = get_os_version()
+        total_memory, used_memory = get_memory_usage()
+        cpu_usage = get_cpu_usage()
+        updates_available = get_updates_available()
+
+        message = f"""OS version: {os_version}\n
+Memory usage {used_memory: .2f}/{total_memory: .2f}GB\n
+CPU usage: {cpu_usage: .2f}%\n
+Updates available: {updates_available}"""
+        print(message)
+        update.message.reply_text(message)
+    else:
+        update.message.reply_text("This command can only be ran by the owner of the bot")
+
 def main():
     """Start the bot."""
     updater = Updater(read_token("token"), use_context=True)
@@ -190,10 +245,10 @@ def main():
     dispatcher.add_handler(CommandHandler("optout", opt_out_command))
     dispatcher.add_handler(CommandHandler("optin", opt_in_command))
     dispatcher.add_handler(CommandHandler("getoptinstatus", get_opt_status))
-
+    dispatcher.add_handler(CommandHandler("sysinfo", get_system_info))
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, add_xp))
-
+    
     # Start the Bot
     updater.start_polling()
 
