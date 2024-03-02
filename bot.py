@@ -4,7 +4,6 @@ import database
 import sqlite3
 import random
 import psutil
-import apt
 import distro
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -203,13 +202,6 @@ def get_memory_usage():
 def get_cpu_usage():
     return psutil.cpu_percent(interval=1)
 
-def get_updates_available():
-    cache = apt.Cache()
-    cache.open()
-    cache.upgrade()
-    updates = [pkg for pkg in cache if pkg.is_upgradable]
-    return len(updates)
-
 def get_system_info(update: Update, context: CallbackContext):
     user_id =  update.message.from_user.id
 
@@ -217,12 +209,10 @@ def get_system_info(update: Update, context: CallbackContext):
         os_version = get_os_version()
         total_memory, used_memory = get_memory_usage()
         cpu_usage = get_cpu_usage()
-        updates_available = get_updates_available()
 
         message = f"""OS version: {os_version}\n
 Memory usage {used_memory: .2f}/{total_memory: .2f}GB\n
-CPU usage: {cpu_usage: .2f}%\n
-Updates available: {updates_available}"""
+CPU usage: {cpu_usage: .2f}%"""
         print(message)
         update.message.reply_text(message)
     else:
