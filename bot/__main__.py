@@ -1,6 +1,6 @@
 from telegram import Update, User, Bot
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-import database
+import bot.database as database
 import sqlite3
 import random
 import psutil
@@ -57,7 +57,7 @@ def get_progress(update: Update, context: CallbackContext) -> None:
                     update.message.reply_text(f'You are rank {title}! Your current XP is {xp}/{max_xp}!')
     else:
         update.message.reply_text(f'This command must be run in a group!')
-        
+
 #Adds a rank to the current server. Only works if the user is an admin. Format is /addrank [title] [min_xp]
 def add_rank(update: Update, context: CallbackContext) -> None:
     connection = database.create_connection("database.db")
@@ -80,14 +80,14 @@ def add_rank(update: Update, context: CallbackContext) -> None:
             except Exception as e:
                 update.message.reply_markdown_v2(f'Failed to create rank: \n```{e}```')
     elif group_chat:
-       update.message.reply_text(f'You aren\'t admin!') 
+       update.message.reply_text(f'You aren\'t admin!')
     else:
         update.message.reply_text(f'This command must be ran in a group!')
     connection.close()
 
 def add_xp(update: Update, context: CallbackContext) -> None:
     conn = database.create_connection("database.db")
-    if update.message != None and update.message.from_user != None:    
+    if update.message != None and update.message.from_user != None:
         user_id = update.message.from_user.id
         group_id = update.message.chat.id
 
@@ -107,7 +107,7 @@ def add_xp(update: Update, context: CallbackContext) -> None:
                     if new_xp>= progress[1]:
                         title = database.get_user_title(conn, user_id, group_id)
                         user_name = update.message.from_user.full_name
-                        update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!')      
+                        update.message.reply_text(f'{user_name} has ranked up! They are now rank {title}!')
 
 def award_xp(message:str ) -> int:
     if len(message)<=3:
@@ -117,7 +117,7 @@ def award_xp(message:str ) -> int:
 
 def opt_out_command(update: Update, context: CallbackContext) -> None:
     conn = database.create_connection("database.db")
-    if update.message != None and update.message.from_user != None:    
+    if update.message != None and update.message.from_user != None:
         user_id = update.message.from_user.id
         group_id = update.message.chat.id
 
@@ -126,11 +126,11 @@ def opt_out_command(update: Update, context: CallbackContext) -> None:
         if group_chat:
             database.create_user_if_not_exists(conn, user_id, group_id)
             database.opt_out(conn, user_id)
-            update.message.reply_text(f'You have been opted out!') 
+            update.message.reply_text(f'You have been opted out!')
 
 def opt_in_command(update: Update, context: CallbackContext) -> None:
     conn = database.create_connection("database.db")
-    if update.message != None and update.message.from_user != None:    
+    if update.message != None and update.message.from_user != None:
         user_id = update.message.from_user.id
         group_id = update.message.chat.id
 
@@ -139,7 +139,7 @@ def opt_in_command(update: Update, context: CallbackContext) -> None:
         if group_chat:
             database.create_user_if_not_exists(conn, user_id, group_id)
             database.opt_in(conn, user_id)
-            update.message.reply_text(f'You have been opted in!') 
+            update.message.reply_text(f'You have been opted in!')
 
 
 
@@ -188,7 +188,7 @@ def get_opt_status(update: Update, context: CallbackContext) -> None:
 
 def read_token(filename):
     f = open(filename, "r")
-    return(f.readline())   
+    return(f.readline())
 
 def get_os_version():
     return f"{distro.id().title()} {distro.version(best=True)}"
@@ -238,7 +238,7 @@ def main():
     dispatcher.add_handler(CommandHandler("sysinfo", get_system_info))
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, add_xp))
-    
+
     # Start the Bot
     updater.start_polling()
 
