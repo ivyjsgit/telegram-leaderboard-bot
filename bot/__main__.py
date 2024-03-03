@@ -220,6 +220,8 @@ CPU usage: {cpu_usage: .2f}%"""
 
 def main():
     """Start the bot."""
+
+    print("Bot started!")
     updater = Updater(read_token("token"), use_context=True)
 
     # Get the dispatcher to register handlers
