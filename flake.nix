@@ -43,7 +43,7 @@
         };
 
         devShells = {
-          telegram-leaderboard-bot = pkgs.mkShellNoCC {
+          telegram-leaderboard-bot = pkgs.mkShell {
             packages = [
               pkgs.poetry
               (poetry2nix.mkPoetryEnv {

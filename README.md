@@ -21,5 +21,6 @@ $ nix develop
 ## To get started, run the following:
 
 ```
+$ poetry install
 $ poetry run python -m bot
 ```
