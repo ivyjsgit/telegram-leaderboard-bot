@@ -1,6 +1,15 @@
-
+# Token file
 token
 
+# poetry dist dir
+dist/
+
+# python cache
 __pycache__/
+
+# database state
 *.db
 *.sqbpro
+
+# direnv cache
+.direnv/
